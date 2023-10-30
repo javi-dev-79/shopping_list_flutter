@@ -183,7 +183,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
     }
 
-    final newProductId = await getNextProductId(); // Espera a que se resuelva la función asíncrona
+    final newProductId =
+        await getNextProductId(); // Espera a que se resuelva la función asíncrona
 
     // Crear un objeto Product con los detalles proporcionados por el usuario
     final newProduct = Product(
@@ -197,29 +198,27 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
 
     widget.actualizarListaProductos(newProduct);
-
   }
 
-Future<int> getNextProductId() async {
-  final response = await http.get(Uri.parse('http://$host:3000/products'));
-  if (response.statusCode == 200) {
-    final List<dynamic> jsonData = jsonDecode(response.body);
-    // Encontrar el último ID utilizado en la lista de productos
-    int lastId = 0;
-    for (final productData in jsonData) {
-      final int productId = productData['id'] as int;
-      if (productId > lastId) {
-        lastId = productId;
+  Future<int> getNextProductId() async {
+    final response = await http.get(Uri.parse('http://$host:3000/products'));
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      // Encontrar el último ID utilizado en la lista de productos
+      int lastId = 0;
+      for (final productData in jsonData) {
+        final int productId = productData['id'] as int;
+        if (productId > lastId) {
+          lastId = productId;
+        }
       }
+      // El siguiente ID será el último ID + 1
+      return lastId + 1;
+    } else {
+      // Si hay un error en la solicitud, puedes manejarlo de acuerdo a tus necesidades
+      throw Exception('Error al obtener productos');
     }
-    // El siguiente ID será el último ID + 1
-    return lastId + 1;
-  } else {
-    // Si hay un error en la solicitud, puedes manejarlo de acuerdo a tus necesidades
-    throw Exception('Error al obtener productos');
   }
-}
-
 }
 
 class MyBottomNavigationBar extends StatefulWidget {
@@ -650,15 +649,65 @@ class _PrivateScreenState extends State<PrivateScreen> {
     fetchProducts();
   }
 
+  // Future<void> fetchProducts() async {
+  //   final response = await http.get(Uri.parse('http://$host:3000/products'));
+
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> jsonData = jsonDecode(response.body);
+
+  //     setState(() {
+  //       products = jsonData.map((product) {
+  //         // Actualiza el estado 'selected' al recibir el producto
+  //         return Product.fromJson(product);
+  //       }).toList();
+  //     });
+
+  //     // Registra los productos en el logger
+  //     for (final product in products) {
+  //       logger.d(
+  //           'Producto: ${product.name}, Categoría: ${product.category}, Precio: ${product.price}, Cantidad: ${product.quantity}, Selected: ${product.selected}');
+  //     }
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Error al obtener productos')),
+  //     );
+  //   }
+  // }
+
   Future<void> fetchProducts() async {
     final response = await http.get(Uri.parse('http://$host:3000/products'));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(response.body);
+
       setState(() {
-        products = jsonData.map((product) {
-          // Actualiza el estado 'selected' al recibir el producto
-          return Product.fromJson(product);
+        products = jsonData.map((json) {
+          final double price = json['price'] is int
+              ? (json['price'] as int).toDouble()
+              : json['price'] is String
+                  ? double.tryParse(json['price']) ?? 0.0
+                  : 0.0;
+
+          final int quantity = json['quantity'] is int
+              ? json['quantity'] as int
+              : json['quantity'] is String
+                  ? int.tryParse(json['quantity']) ?? 0
+                  : 0;
+
+          final bool selected = json['selected'] is bool
+              ? json['selected'] as bool
+              : json['selected'] is String
+                  ? json['selected'].toLowerCase() == 'true'
+                  : false;
+
+          return Product(
+            id: json['id'] as int,
+            name: json['name'] as String,
+            category: json['category'] as String,
+            price: price,
+            quantity: quantity,
+            selected: selected,
+          );
         }).toList();
       });
 
@@ -673,6 +722,46 @@ class _PrivateScreenState extends State<PrivateScreen> {
       );
     }
   }
+
+  // Future<List<Product>> fetchProducts() async {
+  //   final response = await http.get(Uri.parse('http://$host:3000/products'));
+
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> jsonData = jsonDecode(response.body);
+  //     final products = jsonData.map((json) {
+  //       final double price = json['price'] is int
+  //           ? (json['price'] as int).toDouble()
+  //           : json['price'] is String
+  //               ? double.tryParse(json['price']) ?? 0.0
+  //               : 0.0;
+
+  //       final int quantity = json['quantity'] is int
+  //           ? json['quantity'] as int
+  //           : json['quantity'] is String
+  //               ? int.tryParse(json['quantity']) ?? 0
+  //               : 0;
+
+  //       final bool selected = json['selected'] is bool
+  //           ? json['selected'] as bool
+  //           : json['selected'] is String
+  //               ? json['selected'].toLowerCase() == 'true'
+  //               : false;
+
+  //       return Product(
+  //         id: json['id'] as int,
+  //         name: json['name'] as String,
+  //         category: json['category'] as String,
+  //         price: price,
+  //         quantity: quantity,
+  //         selected: selected,
+  //       );
+  //     }).toList();
+
+  //     return products;
+  //   } else {
+  //     throw Exception('Failed to load products');
+  //   }
+  // }
 
   void actualizarListaProductos(Product nuevoProducto) {
     setState(() {
@@ -841,6 +930,37 @@ class _PrivateScreenState extends State<PrivateScreen> {
     }
   }
 
+  // Future<void> _updateProduct(Product product) async {
+  //   final url = Uri.parse('http://$host:3000/products/${product.id}');
+
+  //   // Convierte el precio y la cantidad a números si son cadenas
+  //   final double price = product.price is String
+  //       ? double.parse(product.price as String)
+  //       : product.price;
+  //   final int quantity = product.quantity is String
+  //       ? int.parse(product.quantity as String)
+  //       : product.quantity;
+
+  //   final response = await http.put(
+  //     url,
+  //     body: {
+  //       'name': product.name,
+  //       'category': product.category,
+  //       'price': price.toString(),
+  //       'quantity': quantity.toString(),
+  //       'selected': product.selected.toString(),
+  //     },
+  //   );
+
+  //   if (response.statusCode == 200) {
+  //     // Producto actualizado correctamente
+  //     print('Producto actualizado');
+  //   } else {
+  //     // Error al actualizar el producto
+  //     print('Error al actualizar el producto');
+  //   }
+  // }
+
   Future<void> _addProduct() async {
     // Implementa la lógica para agregar un producto
     Navigator.push(
@@ -985,13 +1105,57 @@ class _PublicScreenState extends State<PublicScreen> {
     fetchSelectedProducts();
   }
 
+  // Future<void> fetchSelectedProducts() async {
+  //   final response = await http.get(Uri.parse('http://$host:3000/products'));
+
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> jsonData = jsonDecode(response.body);
+  //     final products =
+  //         jsonData.map((product) => Product.fromJson(product)).toList();
+
+  //     setState(() {
+  //       selectedProducts =
+  //           products.where((product) => product.selected).toList();
+  //     });
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Error al obtener productos')),
+  //     );
+  //   }
+  // }
+
   Future<void> fetchSelectedProducts() async {
     final response = await http.get(Uri.parse('http://$host:3000/products'));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(response.body);
-      final products =
-          jsonData.map((product) => Product.fromJson(product)).toList();
+      final products = jsonData.map((product) {
+        // Verifica si el valor es String y luego intenta convertirlo a double
+        final price = product['price'] is String
+            ? double.tryParse(product['price']) ?? 0.0
+            : (product['price'] is int
+                ? product['price'].toDouble()
+                : product['price'].toDouble());
+
+        // Convierte quantity a double en lugar de int
+        final quantity = product['quantity'] is String
+            ? int.tryParse(product['quantity']) ?? 0
+            : product['quantity'];
+
+        // Convierte selected a bool
+        final selected = product['selected'] is String
+            ? product['selected'].toLowerCase() == 'true'
+            : product['selected'];
+
+        return Product(
+          id: product['id'],
+          name: product['name'],
+          category: product['category'],
+          price: price,
+          quantity: quantity, // Ahora es de tipo double
+          selected: selected,
+        );
+      }).toList();
 
       setState(() {
         selectedProducts =
@@ -1183,7 +1347,6 @@ class User {
   }
 }
 
-
 class EditProductScreen extends StatefulWidget {
   final Product product;
 
@@ -1353,14 +1516,38 @@ class _EditProductScreenState extends State<EditProductScreen> {
     );
   }
 
+  // Future<http.Response> updateProductInList(Product product) async {
+  //   final url = Uri.parse('http://$host:3000/products/${product.id}');
+
+  //   final response = await http.put(url, body: {
+  //     'name': product.name,
+  //     'category': product.category,
+  //     'price': product.price.toString(),
+  //     'quantity': product.quantity.toString(),
+  //     'selected': product.selected.toString(),
+  //   });
+
+  //   return response;
+  // }
+
   Future<http.Response> updateProductInList(Product product) async {
     final url = Uri.parse('http://$host:3000/products/${product.id}');
+
+    logger.i('El id del producto es: ${product.id}');
+
+    // Convierte el precio y la cantidad a números si son cadenas
+    final double price = product.price is String
+        ? double.parse(product.price as String)
+        : product.price;
+    final int quantity = product.quantity is String
+        ? int.parse(product.quantity as String)
+        : product.quantity;
 
     final response = await http.put(url, body: {
       'name': product.name,
       'category': product.category,
-      'price': product.price.toString(),
-      'quantity': product.quantity.toString(),
+      'price': price.toString(),
+      'quantity': quantity.toString(),
       'selected': product.selected.toString(),
     });
 
