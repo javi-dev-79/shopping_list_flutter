@@ -1,1 +1,1 @@
-const host = '192.168.1.50';
+const host = 'SUSTITUIR_POR_TU_IP';
