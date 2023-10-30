@@ -45,7 +45,7 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  // Aquí puedes definir los campos y controladores para el formulario
+  // campos y controladores para el formulario
   final TextEditingController nameController = TextEditingController();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
@@ -64,7 +64,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          // Aquí puedes definir el formulario con los campos Nombre, Categoría, Precio y Cantidad
+          // formulario con los campos Nombre, Categoría, Precio y Cantidad
           child: Column(
             children: [
               TextFormField(
@@ -136,11 +136,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   }
 
                   if (parsedPrice != null && parsedQuantity != null) {
-                    // Aquí puedes implementar la lógica para guardar el producto en la base de datos
                     _saveProduct(); // Llama al método _saveProduct para guardar el producto.
-                    // Puedes utilizar los valores de los controladores (nameController, categoryController, etc.)
-                    // para crear un nuevo producto y enviarlo al servidor.
-
                     Navigator.pop(context,
                         true); // Cierra la pantalla de agregar producto después de guardar.
                   }
@@ -1187,179 +1183,6 @@ class User {
   }
 }
 
-// class EditProductScreen extends StatefulWidget {
-//   final Product product;
-
-//   const EditProductScreen({Key? key, required this.product}) : super(key: key);
-
-//   @override
-//   _EditProductScreenState createState() => _EditProductScreenState();
-// }
-
-// class _EditProductScreenState extends State<EditProductScreen> {
-//   final TextEditingController _nameController = TextEditingController();
-//   final TextEditingController _categoryController = TextEditingController();
-//   final TextEditingController _priceController = TextEditingController();
-//   final TextEditingController _quantityController = TextEditingController();
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Editar Producto'),
-//         backgroundColor: Colors.orange,
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           children: [
-//             TextField(
-//               controller: _nameController,
-//               decoration: const InputDecoration(
-//                 labelText: 'Nombre',
-//               ),
-//             ),
-//             TextField(
-//               controller: _categoryController,
-//               decoration: const InputDecoration(
-//                 labelText: 'Categoría',
-//               ),
-//             ),
-//             TextField(
-//               controller: _priceController,
-//               decoration: const InputDecoration(
-//                 labelText: 'Precio',
-//               ),
-//             ),
-//             TextField(
-//               controller: _quantityController,
-//               decoration: const InputDecoration(
-//                 labelText: 'Cantidad',
-//               ),
-//             ),
-//             ElevatedButton(
-//               onPressed: () {
-//                 final String name = _nameController.text;
-//                 final String category = _categoryController.text;
-//                 final double price =
-//                     Utils._parseDouble(_priceController.text) ?? 0.0;
-//                 final int quantity =
-//                     Utils._parseInt(_quantityController.text) ?? 0;
-
-//                 if (name.isNotEmpty &&
-//                     category.isNotEmpty &&
-//                     price >= 0 &&
-//                     quantity >= 0) {
-//                   // Los datos son válidos, guarda el producto o realiza otras acciones
-//                 } else {
-//                   ScaffoldMessenger.of(context).showSnackBar(
-//                     const SnackBar(
-//                       content: Text(
-//                           'Por favor, completa todos los campos correctamente.'),
-//                     ),
-//                   );
-//                 }
-//               },
-//               style: ButtonStyle(
-//                 backgroundColor: MaterialStateProperty.all(Colors.orange),
-//               ),
-//               child: const Text('Guardar Cambios'),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-// class EditProductScreen extends StatefulWidget {
-//   final Product product;
-
-//   EditProductScreen({required this.product});
-
-//   @override
-//   _EditProductScreenState createState() => _EditProductScreenState();
-// }
-
-// class _EditProductScreenState extends State<EditProductScreen> {
-//   final TextEditingController nameController = TextEditingController();
-//   final TextEditingController categoryController = TextEditingController();
-//   final TextEditingController priceController = TextEditingController();
-//   final TextEditingController quantityController = TextEditingController();
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     // Inicializa los controladores con los valores actuales del producto
-//     nameController.text = widget.product.name;
-//     categoryController.text = widget.product.category;
-//     priceController.text = widget.product.price.toStringAsFixed(2);
-//     quantityController.text = widget.product.quantity.toString();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Editar Producto'),
-//         backgroundColor: Colors.orange, // Color de la barra de navegación
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           children: [
-//             TextField(
-//               controller: nameController,
-//               decoration: const InputDecoration(labelText: 'Nombre'),
-//             ),
-//             TextField(
-//               controller: categoryController,
-//               decoration: const InputDecoration(labelText: 'Categoría'),
-//             ),
-//             TextField(
-//               controller: priceController,
-//               decoration: const InputDecoration(
-//                   labelText: 'Precio (€)'), // Añadido símbolo del euro
-//             ),
-//             TextField(
-//               controller: quantityController,
-//               decoration: const InputDecoration(labelText: 'Cantidad'),
-//             ),
-//             ElevatedButton(
-//               onPressed: () {
-//                 // Obtén los valores de los controladores y realiza la validación
-//                 final String name = nameController.text;
-//                 final String category = categoryController.text;
-//                 final double price =
-//                     Utils._parseDouble(priceController.text) ?? 0.0;
-//                 final int quantity =
-//                     Utils._parseInt(quantityController.text) ?? 0;
-
-//                 // Verifica que los valores sean válidos antes de guardar
-//                 if (name.isNotEmpty &&
-//                     category.isNotEmpty &&
-//                     price >= 0 &&
-//                     quantity >= 0) {
-//                   // Aquí puedes realizar la actualización del producto en db.json
-//                   // Utiliza el widget.product.id para identificar el producto
-//                   // y los nuevos valores para actualizarlo
-//                 } else {
-//                   // Muestra un mensaje de error si los datos no son válidos
-//                   ScaffoldMessenger.of(context).showSnackBar(
-//                     const SnackBar(
-//                         content: Text(
-//                             'Por favor, completa los campos correctamente.')),
-//                   );
-//                 }
-//               },
-//               child: const Text('Guardar Cambios'),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-// *****************************************************************************
 
 class EditProductScreen extends StatefulWidget {
   final Product product;

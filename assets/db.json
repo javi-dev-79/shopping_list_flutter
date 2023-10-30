@@ -29,20 +29,12 @@
       "selected": false
     },
     {
-      "id": 3,
-      "name": "Pan",
-      "category": "Panadería",
-      "price": 2.19,
-      "quantity": 0,
-      "selected": false
-    },
-    {
       "id": 4,
       "name": "Huevos",
       "category": "Lácteos",
       "price": 3.99,
       "quantity": 0,
-      "selected": false
+      "selected": true
     },
     {
       "id": 7,
@@ -50,7 +42,7 @@
       "category": "Hortalizas",
       "price": 3,
       "quantity": 2,
-      "selected": false
+      "selected": true
     },
     {
       "id": 8,
@@ -59,14 +51,6 @@
       "price": 3,
       "quantity": 20,
       "selected": false
-    },
-    {
-      "name": "Judias lechozas",
-      "category": "Alimentación",
-      "price": 3.3,
-      "quantity": 3,
-      "selected": false,
-      "id": 10
     },
     {
       "id": 11,
@@ -85,20 +69,12 @@
       "id": 12
     },
     {
-      "name": "Limas",
-      "category": "Frutas",
-      "price": 3.34,
+      "name": "Papas",
+      "category": "Tubérculos",
+      "price": 9,
       "quantity": 2,
       "selected": false,
       "id": 13
-    },
-    {
-      "name": "Granadas",
-      "category": "Frutas",
-      "price": 8,
-      "quantity": 7,
-      "selected": false,
-      "id": 14
     }
   ]
 }
