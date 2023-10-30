@@ -69,11 +69,11 @@
       "id": 12
     },
     {
-      "name": "Papas",
+      "name": "Papa",
       "category": "Tubérculos",
-      "price": 9,
-      "quantity": 2,
-      "selected": false,
+      "price": "9.0",
+      "quantity": "2",
+      "selected": "false",
       "id": 13
     }
   ]
