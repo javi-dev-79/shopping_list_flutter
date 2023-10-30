@@ -1,771 +1,328 @@
-// *****************************************************************************
 
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'product.dart';
-// import 'constants.dart';
-// import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-// class PrivateScreen extends StatefulWidget {
-//   const PrivateScreen({Key? key}) : super(key: key);
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
+import 'add_product_screen.dart';
+import 'constants.dart';
+import 'edit_product_screen.dart';
+import 'product.dart';
 
-//   @override
-//   _PrivateScreenState createState() => _PrivateScreenState();
-// }
+class PrivateScreen extends StatefulWidget {
+  const PrivateScreen({Key? key}) : super(key: key);
 
-// class _PrivateScreenState extends State<PrivateScreen> {
-//   List<Product> products = [];
+  @override
+  _PrivateScreenState createState() => _PrivateScreenState();
+}
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchProducts();
-//   }
+class _PrivateScreenState extends State<PrivateScreen> {
+  List<Product> products = [];
 
-//   Future<void> fetchProducts() async {
-//     final response = await http.get(Uri.parse('http://$host:3000/products'));
+  final Logger logger = Logger();
 
-//     if (response.statusCode == 200) {
-//       final List<dynamic> jsonData = jsonDecode(response.body);
-//       setState(() {
-//         products =
-//             jsonData.map((product) => Product.fromJson(product)).toList();
-//       });
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al obtener productos')),
-//       );
-//     }
-//   }
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Padding(
-//         padding: const EdgeInsets.only(top: 20.0),
-//         child: Column(
-//           children: [
-//             Expanded(
-//               child: ListView.builder(
-//                 itemCount: products.length,
-//                 itemBuilder: (context, index) {
-//                   final product = products[index];
-//                   return ListTile(
-//                     leading: Checkbox(
-//                       activeColor: Colors.orange,
-//                       value: product.selected,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           product.selected = value!;
-//                         });
-//                       },
-//                     ),
-//                     title: Text(
-//                       'Nombre: ${product.name}',
-//                       style: const TextStyle(
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     subtitle: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text('Categoría: ${product.category}'),
-//                         Text('Precio: ${product.price.toStringAsFixed(2)}'),
-//                         Text('Cantidad: ${product.quantity.toString()}'),
-//                       ],
-//                     ),
-//                     trailing: Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.edit,
-//                             color: Color.fromARGB(255, 24, 152, 211),
-//                           ),
-//                           onPressed: () {
-//                             _editProduct(product);
-//                           },
-//                         ),
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.delete,
-//                             color: Color.fromARGB(255, 226, 76, 66),
-//                           ),
-//                           onPressed: () {
-//                             _deleteProduct(product.id);
-//                           },
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
+  Future<void> fetchProducts() async {
+    final response = await http.get(Uri.parse('http://$host:3000/products'));
 
-//   void _editProduct(Product product) {
-//     // Implementar la lógica de edición del producto aquí
-//   }
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
 
-//   void _deleteProduct(int productId) {
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: const Text('Confirmar eliminación'),
-//           content:
-//               const Text('¿Estás seguro de que deseas eliminar este producto?'),
-//           actions: [
-//             TextButton(
-//               onPressed: () async {
-//                 Navigator.pop(context);
-//                 await _performDelete(productId);
-//                 fetchProducts();
-//               },
-//               child: const Text('Eliminar'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancelar'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
+      setState(() {
+        products = jsonData.map((json) {
+          final double price = json['price'] is int
+              ? (json['price'] as int).toDouble()
+              : json['price'] is String
+                  ? double.tryParse(json['price']) ?? 0.0
+                  : 0.0;
 
-//   Future<void> _performDelete(int productId) async {
-//     final url = Uri.parse('http://$host:3000/products/$productId');
-//     final response = await http.delete(url);
+          final int quantity = json['quantity'] is int
+              ? json['quantity'] as int
+              : json['quantity'] is String
+                  ? int.tryParse(json['quantity']) ?? 0
+                  : 0;
 
-//     if (response.statusCode == 200) {
-//       // El producto se eliminó con éxito, puedes realizar alguna acción adicional si es necesario
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al eliminar el producto')),
-//       );
-//     }
-//   }
-// }
+          final bool selected = json['selected'] is bool
+              ? json['selected'] as bool
+              : json['selected'] is String
+                  ? json['selected'].toLowerCase() == 'true'
+                  : false;
 
-// *****************************************************************************
+          return Product(
+            id: json['id'] as int,
+            name: json['name'] as String,
+            category: json['category'] as String,
+            price: price,
+            quantity: quantity,
+            selected: selected,
+          );
+        }).toList();
+      });
 
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'product.dart';
-// import 'constants.dart';
-// import 'package:http/http.dart' as http;
+      // Registra los productos en el logger
+      for (final product in products) {
+        logger.d(
+            'Producto: ${product.name}, Categoría: ${product.category}, Precio: ${product.price}, Cantidad: ${product.quantity}, Selected: ${product.selected}');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al obtener productos')),
+      );
+    }
+  }
 
-// class PrivateScreen extends StatefulWidget {
-//   const PrivateScreen({Key? key}) : super(key: key);
+  void actualizarListaProductos(Product nuevoProducto) {
+    setState(() {
+      products.add(nuevoProducto);
+    });
+  }
 
-//   @override
-//   _PrivateScreenState createState() => _PrivateScreenState();
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.only(top: 20.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return ListTile(
+                    leading: Checkbox(
+                      activeColor: Colors.orange,
+                      value: product
+                          .selected, // Asigna el valor de 'selected' al Checkbox
+                      onChanged: (value) async {
+                        setState(() {
+                          product.selected = value!;
+                          _updateProduct(
+                              product); // Aquí debes implementar la lógica para actualizar en el servidor
+                        });
 
-// class _PrivateScreenState extends State<PrivateScreen> {
-//   List<Product> products = [];
+                        // Realiza una solicitud HTTP POST para actualizar el estado "selected" en el servidor
+                        final url = Uri.parse(
+                            'http://$host:3000/products/${product.id}');
+                        final response = await http.post(
+                          url,
+                          headers: {"Content-Type": "application/json"},
+                          body: jsonEncode({"selected": product.selected}),
+                        );
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchProducts();
-//   }
+                        if (response.statusCode != 200) {
+                          // Ocurrió un error, puedes manejarlo aquí
+                          setState(() {
+                            // Revierte el cambio local en caso de error
+                            product.selected = value!;
+                          });
+                        }
+                      },
+                    ),
+                    title: Text(
+                      'Nombre: ${product.name}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Categoría: ${product.category}'),
+                        Text('Precio: ${product.price.toStringAsFixed(2)}€'),
+                        Text('Cantidad: ${product.quantity.toString()}'),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.edit,
+                            color: Color.fromARGB(255, 24, 152, 211),
+                          ),
+                          onPressed: () {
+                            _editProduct(product);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Color.fromARGB(255, 226, 76, 66),
+                          ),
+                          onPressed: () {
+                            _deleteProduct(product.id);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    fetchProducts();
+                  },
+                  icon: const Icon(
+                    IconData(0xe514, fontFamily: 'MaterialIcons'),
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    _addProduct();
+                  },
+                  icon: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-//   Future<void> fetchProducts() async {
-//     final response = await http.get(Uri.parse('http://$host:3000/products'));
+  void _updateProduct(Product product) async {
+    // Create a Map with the updated product data, setting 'selected' to the new value.
+    final updatedProductData = {
+      'id': product.id,
+      'name': product.name,
+      'category': product.category,
+      'price': product.price,
+      'quantity': product.quantity,
+      'selected': product.selected, // Set the 'selected' value.
+    };
 
-//     if (response.statusCode == 200) {
-//       final List<dynamic> jsonData = jsonDecode(response.body);
-//       setState(() {
-//         products =
-//             jsonData.map((product) => Product.fromJson(product)).toList();
-//       });
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al obtener productos')),
-//       );
-//     }
-//   }
+    final url = Uri.parse('http://$host:3000/products/${product.id}');
+    final response = await http.put(
+      url,
+      body: json.encode(updatedProductData),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Padding(
-//         padding: const EdgeInsets.only(top: 20.0),
-//         child: Column(
-//           children: [
-//             Expanded(
-//               child: ListView.builder(
-//                 itemCount: products.length,
-//                 itemBuilder: (context, index) {
-//                   final product = products[index];
-//                   return ListTile(
-//                     leading: Checkbox(
-//                       activeColor: Colors.orange,
-//                       value: product.selected,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           product.selected = value!;
-//                         });
-//                       },
-//                     ),
-//                     title: Text(
-//                       'Nombre: ${product.name}',
-//                       style: const TextStyle(
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     subtitle: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text('Categoría: ${product.category}'),
-//                         Text('Precio: ${product.price.toStringAsFixed(2)}'),
-//                         Text('Cantidad: ${product.quantity.toString()}'),
-//                       ],
-//                     ),
-//                     trailing: Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.edit,
-//                             color: Color.fromARGB(255, 24, 152, 211),
-//                           ),
-//                           onPressed: () {
-//                             _editProduct(product);
-//                           },
-//                         ),
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.delete,
-//                             color: Color.fromARGB(255, 226, 76, 66),
-//                           ),
-//                           onPressed: () {
-//                             _deleteProduct(product.id);
-//                           },
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//        floatingActionButton: FloatingActionButton(
-//         onPressed: () {
-//           // Lógica para actualizar la lista de productos
-//           fetchProducts();
-//         },
-//         backgroundColor: Colors.orange, // Cambia el color de fondo del botón a naranja
-//         child: const Icon(
-//           IconData(0xe514, fontFamily: 'MaterialIcons'), // Icono de actualización
-//           color: Colors.white, // Define el color del icono como blanco
-//         ),
-//       ),
-//       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-//     );
-//   }
+    if (response.statusCode == 200) {
+      // Product was updated successfully.
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error updating the product')),
+      );
+    }
+  }
 
-//   void _addProduct() {
-//   // Implementa la lógica para agregar un producto aquí
-//   // Puedes abrir un cuadro de diálogo de adición o navegar a una nueva pantalla para ingresar detalles del producto.
-//   // Por ejemplo:
-//   // Navigator.push(
-//   //   context,
-//   //   MaterialPageRoute(
-//   //     builder: (context) => AddProductScreen(),
-//   //   ),
-//   // );
-// }
+  Future<void> _addProduct() async {
+    // Implementa la lógica para agregar un producto
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddProductScreen(
+          actualizarListaProductos: actualizarListaProductos,
+        ),
+      ),
+    ).then((value) {
+      setState(() {});
+    });
+    // Guarda el producto y luego actualiza la lista
+    await fetchProducts();
+  }
 
-//   void _editProduct(Product product) {
-//     // Implementar la lógica de edición del producto aquí
-//   }
+  void _editProduct(Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProductScreen(product: product),
+      ),
+    ).then((updatedProduct) {
+      if (updatedProduct != null) {
+        // Actualiza el producto en la lista o realiza cualquier acción necesaria
+        // Puedes hacer esto en base a los datos de updatedProduct
+        setState(() {
+          // Busca el producto en la lista y actualiza sus datos
+          final index = products.indexWhere((p) => p.id == updatedProduct.id);
+          if (index != -1) {
+            products[index] = updatedProduct;
+          }
+        });
+      }
+    });
+  }
 
-//   void _deleteProduct(int productId) {
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: const Text('Confirmar eliminación'),
-//           content:
-//               const Text('¿Estás seguro de que deseas eliminar este producto?'),
-//           actions: [
-//             TextButton(
-//               onPressed: () async {
-//                 Navigator.pop(context);
-//                 await _performDelete(productId);
-//                 fetchProducts();
-//               },
-//               child: const Text('Eliminar'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancelar'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
+  void _deleteProduct(int productId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminación'),
+          content:
+              const Text('¿Estás seguro de que deseas eliminar este producto?'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _performDelete(productId);
+                fetchProducts();
+              },
+              child: const Text('Eliminar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-//   Future<void> _performDelete(int productId) async {
-//     final url = Uri.parse('http://$host:3000/products/$productId');
-//     final response = await http.delete(url);
+  void callFetchProducts() async {
+    fetchProducts();
+  }
 
-//     if (response.statusCode == 200) {
-//       // El producto se eliminó con éxito, puedes realizar alguna acción adicional si es necesario
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al eliminar el producto')),
-//       );
-//     }
-//   }
-// }
+  Future<void> _performDelete(int productId) async {
+    final url = Uri.parse('http://$host:3000/products/$productId');
+    final response = await http.delete(url);
 
-// *****************************************************************************
-
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'add_product_screen.dart';
-// import 'product.dart';
-// import 'constants.dart';
-// import 'package:http/http.dart' as http;
-
-// class PrivateScreen extends StatefulWidget {
-//   const PrivateScreen({Key? key}) : super(key: key);
-
-//   @override
-//   _PrivateScreenState createState() => _PrivateScreenState();
-// }
-
-// class _PrivateScreenState extends State<PrivateScreen> {
-//   List<Product> products = [];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchProducts();
-//   }
-
-//   Future<void> fetchProducts() async {
-//     final response = await http.get(Uri.parse('http://$host:3000/products'));
-
-//     if (response.statusCode == 200) {
-//       final List<dynamic> jsonData = jsonDecode(response.body);
-//       setState(() {
-//         products =
-//             jsonData.map((product) => Product.fromJson(product)).toList();
-//       });
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al obtener productos')),
-//       );
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Padding(
-//         padding: const EdgeInsets.only(top: 20.0),
-//         child: Column(
-//           children: [
-//             Expanded(
-//               child: ListView.builder(
-//                 itemCount: products.length,
-//                 itemBuilder: (context, index) {
-//                   final product = products[index];
-//                   return ListTile(
-//                     leading: Checkbox(
-//                       activeColor: Colors.orange,
-//                       value: product.selected,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           product.selected = value!;
-//                         });
-//                       },
-//                     ),
-//                     title: Text(
-//                       'Nombre: ${product.name}',
-//                       style: const TextStyle(
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     subtitle: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text('Categoría: ${product.category}'),
-//                         Text('Precio: ${product.price.toStringAsFixed(2)}'),
-//                         Text('Cantidad: ${product.quantity.toString()}'),
-//                       ],
-//                     ),
-//                     trailing: Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.edit,
-//                             color: Color.fromARGB(255, 24, 152, 211),
-//                           ),
-//                           onPressed: () {
-//                             _editProduct(product);
-//                           },
-//                         ),
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.delete,
-//                             color: Color.fromARGB(255, 226, 76, 66),
-//                           ),
-//                           onPressed: () {
-//                             _deleteProduct(product.id);
-//                           },
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-//       bottomNavigationBar: BottomAppBar(
-//         shape: const CircularNotchedRectangle(),
-//         child: Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceAround,
-//           children: [
-//             Padding(
-//               padding: const EdgeInsets.all(10.0), // Relleno de 10 pixeles
-//               child: Container(
-//                 decoration: const BoxDecoration(
-//                   color: Colors.orange, // Color de fondo naranja
-//                   shape: BoxShape.circle, // Opcional: Forma del botón
-//                 ),
-//                 child: IconButton(
-//                   onPressed: () {
-//                     fetchProducts();
-//                   },
-//                   icon: const Icon(
-//                     IconData(0xe514, fontFamily: 'MaterialIcons'),
-//                     color: Colors.white, // Color del icono blanco
-//                   ),
-//                 ),
-//               ),
-//             ),
-//             Padding(
-//               padding: const EdgeInsets.all(10.0), // Relleno de 10 pixeles
-//               child: Container(
-//                 decoration: const BoxDecoration(
-//                   color: Colors.green, // Color de fondo naranja
-//                   shape: BoxShape.circle, // Opcional: Forma del botón
-//                 ),
-//                 child: IconButton(
-//                   onPressed: () {
-//                     _addProduct();
-//                   },
-//                   icon: const Icon(
-//                     Icons.add,
-//                     color: Colors.white, // Color del icono blanco
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   void _addProduct() {
-//     // Implementa la lógica para agregar un producto aquí
-//     // Puedes abrir un cuadro de diálogo de adición o navegar a una nueva pantalla para ingresar detalles del producto.
-//     // Por ejemplo:
-//     Navigator.push(
-//       context,
-//       MaterialPageRoute(
-//         builder: (context) => const AddProductScreen(),
-//       ),
-//     );
-//   }
-
-//   void _editProduct(Product product) {
-//     // Implementar la lógica de edición del producto aquí
-//   }
-
-//   void _deleteProduct(int productId) {
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: const Text('Confirmar eliminación'),
-//           content:
-//               const Text('¿Estás seguro de que deseas eliminar este producto?'),
-//           actions: [
-//             TextButton(
-//               onPressed: () async {
-//                 Navigator.pop(context);
-//                 await _performDelete(productId);
-//                 fetchProducts();
-//               },
-//               child: const Text('Eliminar'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancelar'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   Future<void> _performDelete(int productId) async {
-//     final url = Uri.parse('http://$host:3000/products/$productId');
-//     final response = await http.delete(url);
-
-//     if (response.statusCode == 200) {
-//       // El producto se eliminó con éxito, puedes realizar alguna acción adicional si es necesario
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al eliminar el producto')),
-//       );
-//     }
-//   }
-// }
-
-// *****************************************************************************
-
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'add_product_screen.dart';
-// import 'product.dart';
-// import 'constants.dart';
-// import 'package:http/http.dart' as http;
-
-// class PrivateScreen extends StatefulWidget {
-//   const PrivateScreen({Key? key}) : super(key: key);
-
-//   @override
-//   _PrivateScreenState createState() => _PrivateScreenState();
-// }
-
-// class _PrivateScreenState extends State<PrivateScreen> {
-//   List<Product> products = [];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchProducts();
-//   }
-
-//   Future<void> fetchProducts() async {
-//     final response = await http.get(Uri.parse('http://$host:3000/products'));
-
-//     if (response.statusCode == 200) {
-//       final List<dynamic> jsonData = jsonDecode(response.body);
-//       setState(() {
-//         products =
-//             jsonData.map((product) => Product.fromJson(product)).toList();
-//       });
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al obtener productos')),
-//       );
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Padding(
-//         padding: const EdgeInsets.only(top: 20.0),
-//         child: Column(
-//           children: [
-//             Expanded(
-//               child: ListView.builder(
-//                 itemCount: products.length,
-//                 itemBuilder: (context, index) {
-//                   final product = products[index];
-//                   return ListTile(
-//                     leading: Checkbox(
-//                       activeColor: Colors.orange,
-//                       value: product.selected,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           product.selected = value!;
-//                         });
-//                       },
-//                     ),
-//                     title: Text(
-//                       'Nombre: ${product.name}',
-//                       style: const TextStyle(
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     subtitle: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text('Categoría: ${product.category}'),
-//                         Text('Precio: ${product.price.toStringAsFixed(2)}'),
-//                         Text('Cantidad: ${product.quantity.toString()}'),
-//                       ],
-//                     ),
-//                     trailing: Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.edit,
-//                             color: Color.fromARGB(255, 24, 152, 211),
-//                           ),
-//                           onPressed: () {
-//                             _editProduct(product);
-//                           },
-//                         ),
-//                         IconButton(
-//                           icon: const Icon(
-//                             Icons.delete,
-//                             color: Color.fromARGB(255, 226, 76, 66),
-//                           ),
-//                           onPressed: () {
-//                             _deleteProduct(product.id);
-//                           },
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-//       bottomNavigationBar: BottomAppBar(
-//         shape: const CircularNotchedRectangle(),
-//         child: Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceAround,
-//           children: [
-//             Padding(
-//               padding: const EdgeInsets.all(10.0), // Relleno de 10 pixeles
-//               child: Container(
-//                 decoration: const BoxDecoration(
-//                   color: Colors.orange, // Color de fondo naranja
-//                   shape: BoxShape.circle, // Opcional: Forma del botón
-//                 ),
-//                 child: IconButton(
-//                   onPressed: () {
-//                     fetchProducts();
-//                   },
-//                   icon: const Icon(
-//                     IconData(0xe514, fontFamily: 'MaterialIcons'),
-//                     color: Colors.white, // Color del icono blanco
-//                   ),
-//                 ),
-//               ),
-//             ),
-//             Padding(
-//               padding: const EdgeInsets.all(10.0), // Relleno de 10 pixeles
-//               child: Container(
-//                 decoration: const BoxDecoration(
-//                   color: Colors.green, // Color de fondo naranja
-//                   shape: BoxShape.circle, // Opcional: Forma del botón
-//                 ),
-//                 child: IconButton(
-//                   onPressed: () {
-//                     _addProduct();
-//                   },
-//                   icon: const Icon(
-//                     Icons.add,
-//                     color: Colors.white, // Color del icono blanco
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Future<void> _addProduct() async {
-//     // Implementa la lógica para agregar un producto aquí
-//     // Puedes abrir un cuadro de diálogo de adición o navegar a una nueva pantalla para ingresar detalles del producto.
-//     // Por ejemplo:
-//     Navigator.push(
-//       context,
-//       MaterialPageRoute(
-//         builder: (context) => const AddProductScreen(),
-//       ),
-//     ).then((value) {
-//       setState(() {});
-//     });
-//     // Guarda el producto y luego actualiza la lista
-//     await fetchProducts();
-//   }
-
-//   void _editProduct(Product product) {
-//     // Implementar la lógica de edición del producto aquí
-//   }
-
-//   void _deleteProduct(int productId) {
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: const Text('Confirmar eliminación'),
-//           content:
-//               const Text('¿Estás seguro de que deseas eliminar este producto?'),
-//           actions: [
-//             TextButton(
-//               onPressed: () async {
-//                 Navigator.pop(context);
-//                 await _performDelete(productId);
-//                 fetchProducts();
-//               },
-//               child: const Text('Eliminar'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancelar'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   void callFetchProducts() async {
-//     fetchProducts();
-//   }
-
-//   Future<void> _performDelete(int productId) async {
-//     final url = Uri.parse('http://$host:3000/products/$productId');
-//     final response = await http.delete(url);
-
-//     if (response.statusCode == 200) {
-//       // El producto se eliminó con éxito, puedes realizar alguna acción adicional si es necesario
-//     } else {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Error al eliminar el producto')),
-//       );
-//     }
-//   }
-// }
+    if (response.statusCode == 200) {
+      // El producto se eliminó con éxito, puedes realizar alguna acción adicional si es necesario
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al eliminar el producto')),
+      );
+    }
+  }
+}
