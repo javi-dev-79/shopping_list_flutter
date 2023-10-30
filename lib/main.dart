@@ -7,7 +7,8 @@ import 'package:logger/logger.dart';
 import 'constants.dart';
 
 void main() async {
-  await dotenv.load(fileName: ".env"); // Carga las variables de entorno desde el archivo .env
+  await dotenv.load(
+      fileName: ".env"); // Carga las variables de entorno desde el archivo .env
 
   runApp(
     MaterialApp(
@@ -35,7 +36,9 @@ class MyApp extends StatelessWidget {
 }
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  const AddProductScreen({super.key, required this.actualizarListaProductos});
+
+  final Function(Product) actualizarListaProductos; // Agregamos esta función
 
   @override
   _AddProductScreenState createState() => _AddProductScreenState();
@@ -140,16 +143,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
                     Navigator.pop(context,
                         true); // Cierra la pantalla de agregar producto después de guardar.
-
-                    // En lugar de Navigator.pop(context), pasamos datos de vuelta a PrivateScreen
-                    // Navigator.pop(
-                    //     context, {'updateList': true, 'newProduct': Product});
-                    // Navigator.pushReplacement(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => const PrivateScreen(),
-                    //   ),
-                    // );
                   }
                 },
                 style: ButtonStyle(
@@ -193,7 +186,44 @@ class _AddProductScreenState extends State<AddProductScreen> {
         const SnackBar(content: Text('Error al guardar el producto')),
       );
     }
+
+    final newProductId = await getNextProductId(); // Espera a que se resuelva la función asíncrona
+
+    // Crear un objeto Product con los detalles proporcionados por el usuario
+    final newProduct = Product(
+      id: newProductId, // Debes implementar getNextProductId para generar un ID único
+      name: name,
+      category: category,
+      price: price,
+      quantity: quantity,
+      selected:
+          false, // Opcional: establece el valor predeterminado de selected
+    );
+
+    widget.actualizarListaProductos(newProduct);
+
   }
+
+Future<int> getNextProductId() async {
+  final response = await http.get(Uri.parse('http://$host:3000/products'));
+  if (response.statusCode == 200) {
+    final List<dynamic> jsonData = jsonDecode(response.body);
+    // Encontrar el último ID utilizado en la lista de productos
+    int lastId = 0;
+    for (final productData in jsonData) {
+      final int productId = productData['id'] as int;
+      if (productId > lastId) {
+        lastId = productId;
+      }
+    }
+    // El siguiente ID será el último ID + 1
+    return lastId + 1;
+  } else {
+    // Si hay un error en la solicitud, puedes manejarlo de acuerdo a tus necesidades
+    throw Exception('Error al obtener productos');
+  }
+}
+
 }
 
 class MyBottomNavigationBar extends StatefulWidget {
@@ -648,6 +678,12 @@ class _PrivateScreenState extends State<PrivateScreen> {
     }
   }
 
+  void actualizarListaProductos(Product nuevoProducto) {
+    setState(() {
+      products.add(nuevoProducto);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -814,7 +850,9 @@ class _PrivateScreenState extends State<PrivateScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddProductScreen(),
+        builder: (context) => AddProductScreen(
+          actualizarListaProductos: actualizarListaProductos,
+        ),
       ),
     ).then((value) {
       setState(() {});
